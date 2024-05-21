@@ -45,7 +45,7 @@ MEM_GB_PER_XP=32 # similar to Minizinc competition.
 VERSION= "2.3"
 SOLVER= "ACE-$VERSION"
 ACE_COMMAND="java -Xmx${MEM_GB_PER_XP}g -jar $HOME/deps/ACE/build/libs/$SOLVER.jar"
-ACE_OPTIONS="-t=$TIMEOUT" # be careful, in ACE the options must be situed after the instance file.
+ACE_OPTIONS="-t=$TIMEOUT -npc=True -ev" # be careful, in ACE the options must be situed after the instance file.
 OUTPUT_DIR="$BENCHMARKS_DIR_PATH/campaign/$MACHINE/$SOLVER"
 mkdir -p $OUTPUT_DIR
 
