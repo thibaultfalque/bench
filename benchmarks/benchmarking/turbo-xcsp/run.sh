@@ -26,7 +26,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 source $1
-source ${BENCHMARKS_DIR_PATH}/../pybench/bin/activate
+source ${BENCHMARKS_DIR_PATH}/../venv/bin/activate
 
 # If it has an argument, we retry the jobs that failed on a previous run.
 # If the experiments were not complete, you can simply rerun the script, parallel will ignore the jobs that are already done.
@@ -37,18 +37,19 @@ fi
 
 # I. Define the campaign to run.
 
-MZN_SOLVER="turbo.gpu.release"
+SOLVER="turbo.gpu.release"
+SOLVER_EXECUTABLE="/home/falque/Travail/PostDoc-SnT/Softwares/lala-land/turbo-github/build/gpu-release-local/turbo"
 VERSION="v1.1.7" # Note that this is only for the naming of the output directory, we do not verify the actual version of the solver.
 # This is to avoid MiniZinc to kill Turbo before it can print the statistics.
-MZN_TIMEOUT=1860000
-REAL_TIMEOUT=1800000
+MZN_TIMEOUT=1000
+REAL_TIMEOUT=1000
 CORES=1 # The number of core used on the node.
 MACHINE=$(basename "$1" ".sh")
 INSTANCES_PATH="$BENCHMARKS_DIR_PATH/benchmarking/all.csv"
 
 # II. Prepare the command lines and output directory.
-MZN_COMMAND="minizinc --solver $MZN_SOLVER -s --json-stream -t $MZN_TIMEOUT --output-mode json --output-time --output-objective -hardware $MACHINE -version $VERSION -timeout $REAL_TIMEOUT"
-OUTPUT_DIR="$BENCHMARKS_DIR_PATH/campaign/$MACHINE/$MZN_SOLVER-$VERSION"
+COMMAND="$SOLVER_EXECUTABLE -v -s -t $MZN_TIMEOUT -a -i -hardware $MACHINE -version $VERSION -timeout $REAL_TIMEOUT"
+OUTPUT_DIR="$BENCHMARKS_DIR_PATH/campaign/$MACHINE/$SOLVER-$VERSION"
 mkdir -p $OUTPUT_DIR
 
 # If we are on the HPC, we encapsulate the command in a srun command to reserve the resources needed.
@@ -72,4 +73,4 @@ lshw -json > $OUTPUT_DIR/$(basename "$MZN_WORKFLOW_PATH")/hardware-"$MACHINE".js
 # The `parallel` command spawns one `srun` command per experiment, which executes the minizinc solver with the right resources.
 
 COMMANDS_LOG="$OUTPUT_DIR/$(basename "$MZN_WORKFLOW_PATH")/jobs.log"
-parallel --verbose --no-run-if-empty --rpl '{} uq()' -k --colsep ',' --skip-first-line -j $NUM_PARALLEL_EXPERIMENTS --resume --joblog $COMMANDS_LOG $SRUN_COMMAND $MZN_COMMAND $BENCHMARKING_DIR_PATH/{3} '2>&1' '|' python3 $DUMP_PY_PATH $OUTPUT_DIR {1} {2} {3} $MZN_SOLVER :::: $INSTANCES_PATH
+parallel --verbose --no-run-if-empty --rpl '{} uq()' -k --colsep ',' --skip-first-line -j $NUM_PARALLEL_EXPERIMENTS --resume --joblog $COMMANDS_LOG $SRUN_COMMAND $COMMAND $BENCHMARKING_DIR_PATH/{3} '2>&1' '|' python3 $DUMP_PY_PATH $OUTPUT_DIR {1} {2} {3} $SOLVER :::: $INSTANCES_PATH

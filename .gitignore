@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 
 campaign/
+*.csv
+benchmarks/data/XCSP
